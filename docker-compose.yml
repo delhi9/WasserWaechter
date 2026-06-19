@@ -1,0 +1,9 @@
+services:
+  wasserwaechter:
+    build: .
+    restart: unless-stopped
+    environment:
+      - BOT_TOKEN=${BOT_TOKEN}
+      - DB_PATH=/data/Pflanzendaten.db
+    volumes:
+      - ./data:/data

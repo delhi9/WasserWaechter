@@ -1,0 +1,9 @@
+/archive/
+
+/__pycache__/
+
+/.idea/
+
+.env
+
+Pflanzendaten.db
