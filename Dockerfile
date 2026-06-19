@@ -9,7 +9,7 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Quellcode kopieren
-COPY main.py db.py ./
+COPY main.py db.py translations.py ./
 
 # Persistenz-Verzeichnis anlegen (wird als Volume gemountet)
 RUN mkdir -p /data

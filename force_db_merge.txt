@@ -1,2 +1,7 @@
-docker exec wasserwaechterreloaded-wasserwaechter-1 \
+# Deutsche Datenbank
+docker compose exec wasserwaechter-de \
+  python -c "import sqlite3; c=sqlite3.connect('/data/Pflanzendaten.db'); c.execute('PRAGMA wal_checkpoint(FULL)'); c.close()"
+
+# Englische Datenbank
+docker compose exec wasserwaechter-en \
   python -c "import sqlite3; c=sqlite3.connect('/data/Pflanzendaten.db'); c.execute('PRAGMA wal_checkpoint(FULL)'); c.close()"

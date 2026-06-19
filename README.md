@@ -1,12 +1,12 @@
 # 🌿 WasserWächter – Telegram Bot
 
-Erinnert dich täglich daran, deine Pflanzen zu gießen.
+Zwei Telegram-Bots mit gemeinsamer Funktionalität: WasserWächter auf Deutsch und Water Watcher auf Englisch.
 
 ## Deployment auf dem OrangePi
 
 ### Voraussetzungen
 - Docker & Docker Compose installiert
-- Telegram Bot Token (über @BotFather erstellen)
+- Zwei Telegram Bot Tokens (über @BotFather erstellen)
 
 ### Schritte
 
@@ -15,10 +15,10 @@ Erinnert dich täglich daran, deine Pflanzen zu gießen.
 
 # 2. .env anlegen
 cp .env.example .env
-nano .env          # BOT_TOKEN eintragen
+nano .env          # BOT_TOKEN_DE und BOT_TOKEN_EN eintragen
 
 # 3. Datenbank-Verzeichnis anlegen
-mkdir -p data
+mkdir -p data data-en
 
 # 4. Image bauen und starten
 docker compose up -d --build
@@ -28,8 +28,8 @@ docker compose logs -f
 ```
 
 ### Datenbank sichern
-Die SQLite-Datenbank liegt in `./data/Pflanzendaten.db` auf dem Host.
-Einfach diese Datei sichern.
+Die deutsche SQLite-Datenbank liegt in `./data/Pflanzendaten.db`, die englische in
+`./data-en/Pflanzendaten.db`. Beide Dateien sollten gesichert werden.
 
 ### Bot neu starten
 ```bash

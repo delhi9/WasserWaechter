@@ -1,9 +1,20 @@
 services:
-  wasserwaechter:
+  wasserwaechter-de:
     build: .
     restart: unless-stopped
     environment:
-      - BOT_TOKEN=${BOT_TOKEN}
+      - BOT_TOKEN=${BOT_TOKEN_DE}
+      - BOT_LANGUAGE=de
       - DB_PATH=/data/Pflanzendaten.db
     volumes:
       - ./data:/data
+
+  wasserwaechter-en:
+    build: .
+    restart: unless-stopped
+    environment:
+      - BOT_TOKEN=${BOT_TOKEN_EN}
+      - BOT_LANGUAGE=en
+      - DB_PATH=/data/Pflanzendaten.db
+    volumes:
+      - ./data-en:/data

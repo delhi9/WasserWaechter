@@ -11,3 +11,5 @@ Pflanzendaten.db
 /.agents/
 
 /tests/__pycache__/
+
+docker.md
