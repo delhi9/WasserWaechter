@@ -1,6 +1,6 @@
 # 🌿 WasserWächter – Telegram Bot
 
-Zwei Telegram-Bots mit gemeinsamer Funktionalität: WasserWächter auf Deutsch und Water Watcher auf Englisch.
+Zwei Telegram-Bots mit gemeinsamer Funktionalität: WasserWächter auf Deutsch und WateringWatcher auf Englisch.
 
 ## Deployment auf dem OrangePi
 

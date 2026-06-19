@@ -46,7 +46,7 @@ class KeyboardTest(unittest.TestCase):
         ])
 
     def test_english_help_and_today_navigation(self):
-        self.assertIn("How Water Watcher works", help_text("en"))
+        self.assertIn("How WateringWatcher works", help_text("en"))
         self.assertEqual(help_keyboard("en").inline_keyboard[0][0].text, "Let's go!")
         rows = today_keyboard([(1, "Fern")], language="en").inline_keyboard
         self.assertEqual(rows[-1][0].text, "📋 Back to menu")

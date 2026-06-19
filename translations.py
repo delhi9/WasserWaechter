@@ -104,7 +104,7 @@ TEXTS = {
         "edit_delete": "🗑 Delete plant",
         "help_start": "Let's go!",
         "help": (
-            "🌿 <b>How Water Watcher works</b>\n\n"
+            "🌿 <b>How WateringWatcher works</b>\n\n"
             "📋 <b>Overview</b> shows the status of your plants.\n"
             "💧 <b>Watered</b> records what you watered today.\n"
             "✅ <b>Today</b> shows all plants currently due.\n"
@@ -126,7 +126,7 @@ TEXTS = {
         "today_title": "💧 <b>Water today:</b>",
         "interrupted": "⚠️ <i>Your current action was interrupted.</i>",
         "welcome": (
-            "🌿 Welcome to <b>Water Watcher</b>!\n"
+            "🌿 Welcome to <b>WateringWatcher</b>!\n"
             "I will remind you when your plants need watering."
         ),
         "water_select": "💧 Which plant did you water?",
