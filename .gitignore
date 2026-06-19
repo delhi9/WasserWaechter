@@ -7,3 +7,7 @@
 .env
 
 Pflanzendaten.db
+
+/.agents/
+
+/tests/__pycache__/

@@ -17,6 +17,7 @@ CREATE TABLE IF NOT EXISTS personen (
     kalender          INTEGER NOT NULL,
     reminder_enabled  INTEGER NOT NULL DEFAULT 1,
     reminder_time     TEXT    NOT NULL DEFAULT '10:00',
+    current_message_id INTEGER,
     FOREIGN KEY (kalender) REFERENCES personen(tgid)
 );
 
@@ -34,12 +35,15 @@ CREATE TABLE IF NOT EXISTS pflanzen (
 MIGRATIONS = [
     "ALTER TABLE personen ADD COLUMN reminder_enabled INTEGER NOT NULL DEFAULT 1;",
     "ALTER TABLE personen ADD COLUMN reminder_time TEXT NOT NULL DEFAULT '10:00';",
+    "ALTER TABLE personen ADD COLUMN current_message_id INTEGER;",
 ]
 
 
 class Database:
     def __init__(self, db_path: str) -> None:
-        os.makedirs(os.path.dirname(db_path), exist_ok=True)
+        directory = os.path.dirname(db_path)
+        if directory:
+            os.makedirs(directory, exist_ok=True)
         self._conn = sqlite3.connect(db_path, check_same_thread=False)
         self._conn.row_factory = sqlite3.Row
         self._init_schema()
@@ -124,6 +128,20 @@ class Database:
         self._conn.commit()
         logger.info("Reminder-Zeit für User %s gesetzt auf %s", tgid, time_str)
 
+    def get_current_message_id(self, tgid: int) -> int | None:
+        cur = self._conn.execute(
+            "SELECT current_message_id FROM personen WHERE tgid = ?", (tgid,)
+        )
+        row = cur.fetchone()
+        return row["current_message_id"] if row else None
+
+    def set_current_message_id(self, tgid: int, message_id: int | None) -> None:
+        self._conn.execute(
+            "UPDATE personen SET current_message_id = ? WHERE tgid = ?",
+            (message_id, tgid),
+        )
+        self._conn.commit()
+
     # ------------------------------------------------------------------
     # Pflanzen – Lesen
     # ------------------------------------------------------------------
@@ -131,12 +149,15 @@ class Database:
     def _calendar_tgid(self, tgid: int) -> int:
         return self.get_calendar_id(tgid)
 
-    def get_plant_names(self, tgid: int) -> list[str]:
+    def get_plants(self, tgid: int) -> list[tuple[int, str]]:
         owner = self._calendar_tgid(tgid)
         cur = self._conn.execute(
-            "SELECT pflanze FROM pflanzen WHERE tgid = ? ORDER BY pflanze", (owner,)
+            "SELECT id, pflanze FROM pflanzen WHERE tgid = ? ORDER BY pflanze", (owner,)
         )
-        return [row["pflanze"] for row in cur.fetchall()]
+        return [(row["id"], row["pflanze"]) for row in cur.fetchall()]
+
+    def get_plant_names(self, tgid: int) -> list[str]:
+        return [name for _, name in self.get_plants(tgid)]
 
     def get_plants_with_status(self, tgid: int) -> list[tuple[str, int, int]]:
         owner = self._calendar_tgid(tgid)
@@ -151,21 +172,34 @@ class Database:
             result.append((row["pflanze"], row["intervall"], days_till))
         return result
 
-    def plant_exists(self, tgid: int, name: str) -> bool:
+    def plant_exists(self, tgid: int, name: str, exclude_id: int | None = None) -> bool:
         owner = self._calendar_tgid(tgid)
-        cur = self._conn.execute(
-            "SELECT 1 FROM pflanzen WHERE tgid = ? AND pflanze = ?", (owner, name)
-        )
+        sql = "SELECT 1 FROM pflanzen WHERE tgid = ? AND pflanze = ?"
+        params: tuple = (owner, name)
+        if exclude_id is not None:
+            sql += " AND id != ?"
+            params += (exclude_id,)
+        cur = self._conn.execute(sql, params)
         return cur.fetchone() is not None
 
-    def get_due_plants(self, calendar_tgid: int, today_ordinal: int) -> list[str]:
+    def get_due_plants(self, tgid: int, today_ordinal: int) -> list[tuple[int, str]]:
+        owner = self._calendar_tgid(tgid)
         cur = self._conn.execute(
-            "SELECT pflanze FROM pflanzen "
+            "SELECT id, pflanze FROM pflanzen "
             "WHERE tgid = ? AND ? - lastt >= intervall "
             "ORDER BY pflanze",
-            (calendar_tgid, today_ordinal),
+            (owner, today_ordinal),
         )
-        return [row["pflanze"] for row in cur.fetchall()]
+        return [(row["id"], row["pflanze"]) for row in cur.fetchall()]
+
+    def get_plant_name(self, tgid: int, plant_id: int) -> str | None:
+        owner = self._calendar_tgid(tgid)
+        cur = self._conn.execute(
+            "SELECT pflanze FROM pflanzen WHERE id = ? AND tgid = ?",
+            (plant_id, owner),
+        )
+        row = cur.fetchone()
+        return row["pflanze"] if row else None
 
     # ------------------------------------------------------------------
     # Pflanzen – Schreiben
@@ -184,35 +218,52 @@ class Database:
             logger.error("Fehler beim Hinzufügen von Pflanze %s: %s", name, e)
             raise
 
-    def water_plant(self, tgid: int, name: str) -> None:
+    def water_plant(self, tgid: int, plant_id: int) -> bool:
         owner = self._calendar_tgid(tgid)
         today = datetime.date.today().toordinal()
-        self._conn.execute(
-            "UPDATE pflanzen SET lastt = ? WHERE tgid = ? AND pflanze = ?",
-            (today, owner, name),
+        cur = self._conn.execute(
+            "UPDATE pflanzen SET lastt = ? WHERE id = ? AND tgid = ?",
+            (today, plant_id, owner),
         )
         self._conn.commit()
+        return cur.rowcount == 1
 
-    def update_interval(self, tgid: int, name: str, intervall: int) -> None:
+    def update_interval(self, tgid: int, plant_id: int, intervall: int) -> bool:
         owner = self._calendar_tgid(tgid)
-        self._conn.execute(
-            "UPDATE pflanzen SET intervall = ? WHERE tgid = ? AND pflanze = ?",
-            (intervall, owner, name),
+        cur = self._conn.execute(
+            "UPDATE pflanzen SET intervall = ? WHERE id = ? AND tgid = ?",
+            (intervall, plant_id, owner),
         )
         self._conn.commit()
+        return cur.rowcount == 1
 
-    def update_last_watered(self, tgid: int, name: str, lastt: int) -> None:
+    def update_last_watered(self, tgid: int, plant_id: int, lastt: int) -> bool:
         owner = self._calendar_tgid(tgid)
-        self._conn.execute(
-            "UPDATE pflanzen SET lastt = ? WHERE tgid = ? AND pflanze = ?",
-            (lastt, owner, name),
+        cur = self._conn.execute(
+            "UPDATE pflanzen SET lastt = ? WHERE id = ? AND tgid = ?",
+            (lastt, plant_id, owner),
         )
         self._conn.commit()
+        return cur.rowcount == 1
 
-    def delete_plant(self, tgid: int, name: str) -> None:
+    def rename_plant(self, tgid: int, plant_id: int, name: str) -> bool:
         owner = self._calendar_tgid(tgid)
-        self._conn.execute(
-            "DELETE FROM pflanzen WHERE tgid = ? AND pflanze = ?", (owner, name)
+        cur = self._conn.execute(
+            "UPDATE pflanzen SET pflanze = ? WHERE id = ? AND tgid = ?",
+            (name, plant_id, owner),
         )
         self._conn.commit()
-        logger.info("Pflanze gelöscht: %s (User %s)", name, owner)
+        return cur.rowcount == 1
+
+    def delete_plant(self, tgid: int, plant_id: int) -> bool:
+        owner = self._calendar_tgid(tgid)
+        cur = self._conn.execute(
+            "DELETE FROM pflanzen WHERE id = ? AND tgid = ?", (plant_id, owner)
+        )
+        self._conn.commit()
+        if cur.rowcount:
+            logger.info("Pflanze %s gelöscht (User %s)", plant_id, owner)
+        return cur.rowcount == 1
+
+    def close(self) -> None:
+        self._conn.close()

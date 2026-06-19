@@ -45,10 +45,13 @@ docker compose down
 
 | Funktion | Beschreibung |
 |---|---|
-| 💧 Pflanze gegossen | Markiert eine Pflanze als heute gegossen |
 | 📋 Übersicht | Zeigt alle Pflanzen mit Intervall und Tagen bis zum nächsten Gießen |
+| 💧 Gegossen | Markiert eine Pflanze als heute gegossen |
+| ✅ Heute | Zeigt die heute fälligen Pflanzen direkt im Hauptmenü |
 | 🌱 Neue Pflanze | Fügt eine neue Pflanze hinzu |
-| ✏️ Bearbeiten | Intervall ändern, letztes Gießen setzen, oder Pflanze löschen |
-| 📅 Kalender teilen | Kalender einer anderen Person verknüpfen (Telegram-ID eingeben) |
+| ✏️ Bearbeiten | Name, Intervall und letztes Gießen ändern oder eine Pflanze löschen |
+| 🔗 Teilen | Kalender einer anderen Person verknüpfen (Telegram-ID eingeben) |
+| 🔔 Reminder | Tägliche Erinnerung aktivieren und Uhrzeit einstellen |
 
-Täglich um **10:00 Uhr** schickt der Bot eine Erinnerung für alle fälligen Pflanzen.
+Neue Nutzer werden standardmäßig täglich um **10:00 Uhr** erinnert. Die Uhrzeit lässt sich im Bot ändern.
+Mit `/help` lässt sich die Bedienungsübersicht jederzeit erneut öffnen.
